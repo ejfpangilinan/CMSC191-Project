@@ -5,7 +5,7 @@ from pandas import read_csv
 from pandas import concat
 import random
 from decimal import *
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score,recall_score,precision_score
 from sklearn.metrics import f1_score,confusion_matrix,roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -102,13 +102,6 @@ class NeuralNetwork(object):
 			self.output_weights = np.random.uniform(low=-1.0, high=1.0, size=(4,1)) #weights of output layer
 			self.ouput_bias = np.random.uniform(low=-1.0, high=1.0, size=(1,))  #bias of the output layer
 
-			#------------------------------------------------------------------------------------------------------------#
-			# self.hidden_weights = np.full((self.inputs.shape[1],3), 0.5, dtype=float) #weights of hidden layer
-			# self.hidden_bias = np.full((3,), 0.5, dtype=float) #bias of hidden layer
-
-			# self.output_weights = np.full((3,1), 0.5, dtype=float) #weights of output layer
-			# self.ouput_bias = np.full((1,), 0.5, dtype=float) #bias of the output layer
-			#------------------------------------------------------------------------------------------------------------#
 
 		elif mode == 1:
 
@@ -116,6 +109,10 @@ class NeuralNetwork(object):
 			# model_file = np.load(str(inp+'.npy'),allow_pickle='TRUE').item()
 			model_file = np.load('model.npy',allow_pickle='TRUE').item()
 			self.load_model(model_file)
+
+		else:
+			print("INVALID MODE")
+			exit()
 		
 
 		self.a_out = Y.reshape(len(Y),1)#actual outputs
@@ -212,7 +209,7 @@ if __name__ == "__main__":
 	trainX, testX, trainY, testY = train_test_split(X, Y, test_size=0.3, shuffle=False, random_state=1)
 
 	#print dataset information
-	print(data.info())
+	# print(data.info())
 	print("number of training set \n input: ", len(trainX),"\n output: ",len(trainY))
 	print("number of test set \n input: ", len(testX),"\n output: ",len(testY))
 
@@ -262,13 +259,42 @@ if __name__ == "__main__":
 
 
 	NN = NeuralNetwork(trainX, trainY,0)
+	training_loss = []
+	test_loss = []
 
-	for epoch in range(1500):	
-		if epoch % 100==0: 
-			print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs)))) # mean squared error for loss
+	for epoch in range(1500):
+
+		if epoch % 100==0:
+			print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
+			evaluation(NN.a_out,normalize(NN.p_outputs))
+			training_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
+
 		NN.train()
 
 	NN.save_model()
+
+	NN = NeuralNetwork(testX, testY,1)
+
+	for epoch in range(1500):
+
+		if epoch % 100==0:
+			print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
+			evaluation(NN.a_out,normalize(NN.p_outputs))
+			test_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
+
+		NN.train()
+
+	x_axis = np.arange(0,1500, 100)
+
+	# plotting
+	plt.title("LOSS using Mean Squared Error")
+	plt.xlabel("Epoch")
+	plt.ylabel("Loss")
+	plt.plot(x_axis,np.asarray(training_loss), color ="red", label ='Training')
+	plt.plot(x_axis,np.asarray(test_loss), color ="blue", label ='Test')
+	plt.legend()
+	plt.show()
+
 
 	print("EVALUATION TRAIN")
 	evaluation(NN.a_out,normalize(NN.p_outputs))
@@ -276,33 +302,10 @@ if __name__ == "__main__":
 	evaluation(testY,NN.predict(testX))
 
 
-
-	
-
-	print("TRAINING")
-	print("Data points:",len(trainX))
-	print ("loss1:" + str(np.mean(np.square(NN.a_out- NN.p_outputs))))
-	print("Confusion Matrix:",confusion_matrix(NN.p_outputs,NN.a_out))
-	print("Confusion Accuracy:",conf_accuracy(NN.p_outputs,NN.a_out))
-
-
-	#sample prediction
-
-	#23.7,26.272,585.2,749.2,0.00476416302416414,1
-	#x = ["Temperature","Humidity","Light","CO2","HumidityRatio"]
-	#y = ["Actual Occupancy"]
-
-	x= [23.7,26.272,585.2,749.2,0.00476416302416414]
-	y= [1]
-
-	print(normalize(NN.predict(x)),y)
-
 	
 
 
-	nx, ny= np.array((x),dtype=float), np.array(y,dtype=float)
-	NewNeural = NeuralNetwork(nx,ny,1)
-	print(normalize(NewNeural.predict(x)),y)
+	
 
 
 	
