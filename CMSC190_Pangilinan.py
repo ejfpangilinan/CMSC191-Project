@@ -5,9 +5,10 @@ from pandas import read_csv
 from pandas import concat
 import random
 from decimal import *
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score,recall_score,precision_score
 from sklearn.metrics import f1_score,confusion_matrix,roc_auc_score
+from sklearn.model_selection import train_test_split
 
 
 import warnings
@@ -82,27 +83,40 @@ def evaluation(y_test,y_pred):
 
 	return print(metric_dict)
 
+
+
+
+
 class NeuralNetwork(object):
 	"""Make a 3-layer network (5-4-1)"""
-	def __init__(self, X, Y):
+	def __init__(self, X, Y, mode):
 		#initialized important variables
 
 		self.inputs = X
 
-		self.hidden_weights = np.random.uniform(low=-0.3, high=0.3, size=(self.inputs.shape[1],5))#weights of hidden layer
-		self.hidden_bias = np.random.uniform(low=-0.3, high=0.3, size=(5,)) #bias of hidden layer
+		if mode==0:
 
-		self.output_weights = np.random.uniform(low=-0.3, high=0.3, size=(5,1)) #weights of output layer
-		self.ouput_bias = np.random.uniform(low=-0.3, high=0.3, size=(1,))  #bias of the output layer
+			self.hidden_weights = np.random.uniform(low=-1.0, high=1.0, size=(self.inputs.shape[1],4))#weights of hidden layer
+			self.hidden_bias = np.random.uniform(low=-1.0, high=1.0, size=(4,)) #bias of hidden layer
 
-		#------------------------------------------------------------------------------------------------------------#
-		# self.hidden_weights = np.full((self.inputs.shape[1],3), 0.5, dtype=float) #weights of hidden layer
-		# self.hidden_bias = np.full((3,), 0.5, dtype=float) #bias of hidden layer
+			self.output_weights = np.random.uniform(low=-1.0, high=1.0, size=(4,1)) #weights of output layer
+			self.ouput_bias = np.random.uniform(low=-1.0, high=1.0, size=(1,))  #bias of the output layer
 
-		# self.output_weights = np.full((3,1), 0.5, dtype=float) #weights of output layer
-		# self.ouput_bias = np.full((1,), 0.5, dtype=float) #bias of the output layer
-		#------------------------------------------------------------------------------------------------------------#
+			#------------------------------------------------------------------------------------------------------------#
+			# self.hidden_weights = np.full((self.inputs.shape[1],3), 0.5, dtype=float) #weights of hidden layer
+			# self.hidden_bias = np.full((3,), 0.5, dtype=float) #bias of hidden layer
 
+			# self.output_weights = np.full((3,1), 0.5, dtype=float) #weights of output layer
+			# self.ouput_bias = np.full((1,), 0.5, dtype=float) #bias of the output layer
+			#------------------------------------------------------------------------------------------------------------#
+
+		elif mode == 1:
+
+			# inp =  str(input("Enter model file name:"))
+			# model_file = np.load(str(inp+'.npy'),allow_pickle='TRUE').item()
+			model_file = np.load('model.npy',allow_pickle='TRUE').item()
+			self.load_model(model_file)
+		
 
 		self.a_out = Y.reshape(len(Y),1)#actual outputs
 		self.p_outputs = np.zeros(Y.shape) #holds predicted outputs
@@ -110,6 +124,34 @@ class NeuralNetwork(object):
 		print(self.hidden_weights, self.hidden_bias)
 
 		print(self.output_weights, self.ouput_bias)
+
+
+	def load_model(self,model):
+
+		self.hidden_weights = model['hidden_weights']
+		self.hidden_bias = model['hidden_bias']
+
+		self.output_weights = model['output_weights']
+		self.ouput_bias = model['ouput_bias']
+		
+		print("MODEL LOADED SUCCESSFULLY")
+
+
+
+	def save_model(self):
+
+		model = {
+			"hidden_weights":self.hidden_weights,
+			"hidden_bias": self.hidden_bias,
+			"output_weights": self.output_weights,
+			"ouput_bias":self.ouput_bias,
+		}
+
+		#save model as npy file
+		np.save('model.npy',model)
+		print("MODEL SAVED SUCCESSFULLY AS model.npy")
+
+
 
 	def predict(self,X):
 		#predict using a different input
@@ -143,31 +185,66 @@ class NeuralNetwork(object):
 		self.p_outputs = self.forward_pass()
 		self.back_propagration(0.00001) #use learning rate
 		return
-		
+
+
+
 
 if __name__ == "__main__":
+	# Prepare the Datasets
+
 	#CLEAN THE DATASET
 	# load data
 	test1 = read_csv('datatest.txt', header=0, index_col=0, parse_dates=True, squeeze=True)
 	train = read_csv('datatraining.txt', header=0, index_col=0, parse_dates=True, squeeze=True)
 	test2 = read_csv('datatest2.txt', header=0, index_col=0, parse_dates=True, squeeze=True)
 
-	values = train.values
+	# vertically stack and maintain temporal order
+	data = concat([test1, train, test2])
+
+	values = data.values
 	#separate inputs and output values
 	INPUT, OUTPUT = values[:, 1:-1], values[:, -1]
 	X, Y = np.array((INPUT),dtype=float), np.array((OUTPUT),dtype=float)
 
-	values1 = test1.values
-	#separate inputs and output values
-	INPUT1, OUTPUT1 = values1[:, 1:-1], values1[:, -1]
-	X1, Y1 = np.array((INPUT1),dtype=float), np.array((OUTPUT1),dtype=float)
 
-	values2 = test2.values
-	#separate inputs and output values
-	INPUT2, OUTPUT2 = values2[:, 1:-1], values2[:, -1]
-	X2, Y2 = np.array((INPUT2),dtype=float), np.array((OUTPUT2),dtype=float)
 
-	print(train.info())
+	# split the dataset
+	trainX, testX, trainY, testY = train_test_split(X, Y, test_size=0.3, shuffle=False, random_state=1)
+
+	#print dataset information
+	print(data.info())
+	print("number of training set \n input: ", len(trainX),"\n output: ",len(trainY))
+	print("number of test set \n input: ", len(testX),"\n output: ",len(testY))
+
+
+	#get the frequency count of occupied(1) vs not occuppied(0) in the dataset
+	unique, counts = np.unique(trainY, return_counts=True)
+	freq_array = np.asarray((unique, counts),dtype=int).T
+
+	#upsample the training Data for occuppied(1):
+	up_x = []
+	up_y = []
+
+	r = (freq_array[0][1]-freq_array[1][1])
+	add = 0
+	cnt=0
+
+	while add!=r:
+	    if trainY[cnt]==1:
+	        up_x.append(trainX[cnt])
+	        up_y.append(trainY[cnt])
+	        add+=1
+	        
+	    cnt+=1
+	    if cnt>=len(trainY) and add<r:
+	        cnt=0
+	    
+	        
+	up_x = np.array((up_x),dtype=float)
+	up_y = np.array((up_y),dtype=float)
+
+	trainX = np.concatenate((trainX,up_x),axis=0)
+	trainY = np.concatenate((trainY,up_y),axis=0)
 
 
 	"""
@@ -175,42 +252,57 @@ if __name__ == "__main__":
 	-Temperature, Humidity, Light, CO2, HumidityRatio
 	Dependent Variable: 
 	-Occupancy
+
+
 	"""
+	#get the frequency count of occupied(1) vs not occuppied(0) in the dataset after upsampling
+	unique, counts = np.unique(trainY, return_counts=True)
+	freq_array = np.asarray((unique, counts),dtype=int).T
 
 
-	NN = NeuralNetwork(X, Y)
+
+	NN = NeuralNetwork(trainX, trainY,0)
 
 	for epoch in range(1500):	
 		if epoch % 100==0: 
 			print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs)))) # mean squared error for loss
 		NN.train()
 
-	# print("TRAINING")
-	# print("Data points:",len(X))
-	# print ("loss1:" + str(np.mean(np.square(NN.a_out- NN.p_outputs))))
-	# print("Confusion Matrix:",confusion_matrix(NN.p_outputs,NN.a_out))
-	# print("Confusion Accuracy:",conf_accuracy(NN.p_outputs,NN.a_out))
-	
-
-	
-	# print("TEST1")
-	# print("Data points:",len(X1))
-	# print ("loss1:" + str(np.mean(np.square(Y1- NN.predict(X1)))))
-	# print("Confusion Matrix:",confusion_matrix(NN.predict(X1),Y1))
-	# print("Confusion Accuracy:",conf_accuracy(NN.predict(X1),Y1))
-
-
-	# print("TEST2")
-	# print("Data points:",len(X2))
-	# print ("loss2:" + str(np.mean(np.square(Y2- NN.predict(X2)))))
-	# print("Confusion Matrix:",confusion_matrix(NN.predict(X2),Y2))
-	# print("Confusion Accuracy:",conf_accuracy(NN.predict(X2),Y2))
-
-
+	NN.save_model()
 
 	print("EVALUATION TRAIN")
 	evaluation(NN.a_out,normalize(NN.p_outputs))
 	print("EVALUATION TEST1")
-	evaluation(Y1,NN.predict(X1))
-	print("EVALUATION TEST2")
-	evaluation(Y2,NN.predict(X2))
+	evaluation(testY,NN.predict(testX))
+
+
+
+	
+
+	print("TRAINING")
+	print("Data points:",len(trainX))
+	print ("loss1:" + str(np.mean(np.square(NN.a_out- NN.p_outputs))))
+	print("Confusion Matrix:",confusion_matrix(NN.p_outputs,NN.a_out))
+	print("Confusion Accuracy:",conf_accuracy(NN.p_outputs,NN.a_out))
+
+
+	#sample prediction
+
+	#23.7,26.272,585.2,749.2,0.00476416302416414,1
+	#x = ["Temperature","Humidity","Light","CO2","HumidityRatio"]
+	#y = ["Actual Occupancy"]
+
+	x= [23.7,26.272,585.2,749.2,0.00476416302416414]
+	y= [1]
+
+	print(normalize(NN.predict(x)),y)
+
+	
+
+
+	nx, ny= np.array((x),dtype=float), np.array(y,dtype=float)
+	NewNeural = NeuralNetwork(nx,ny,1)
+	print(normalize(NewNeural.predict(x)),y)
+
+
+	
