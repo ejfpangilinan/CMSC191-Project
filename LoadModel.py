@@ -79,41 +79,41 @@ freq_array = np.asarray((unique, counts),dtype=int).T
 
 
 NN = NeuralNetwork(trainX, trainY,1)
-training_loss = []
-test_loss = []
+# training_loss = []
+# test_loss = []
 
-for epoch in range(1500):
+# for epoch in range(1500):
 
-	if epoch % 100==0:
-		print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
-		evaluation(NN.a_out,normalize(NN.p_outputs))
-		training_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
+# 	if epoch % 100==0:
+# 		print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
+# 		evaluation(NN.a_out,normalize(NN.p_outputs))
+# 		training_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
 
-	NN.train()
+# 	NN.train()
 
-NN.save_model()
+# NN.save_model()
 
 NN = NeuralNetwork(testX, testY,1)
 
-for epoch in range(1500):
+# for epoch in range(1500):
 
-	if epoch % 100==0:
-		print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
-		evaluation(NN.a_out,normalize(NN.p_outputs))
-		test_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
+# 	if epoch % 100==0:
+# 		print ("Epoch " + str(epoch) + " Loss: " + str(np.mean(np.square(NN.a_out- NN.p_outputs))), end=' ') # mean squared error for loss
+# 		evaluation(NN.a_out,normalize(NN.p_outputs))
+# 		test_loss.append(np.mean(np.square(NN.a_out- NN.p_outputs)))
 
-	NN.train()
+# 	NN.train()
 
-x_axis = np.arange(0,1500, 100)
+# x_axis = np.arange(0,1500, 100)
 
-# plotting
-plt.title("LOSS using Mean Squared Error")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.plot(x_axis,np.asarray(training_loss), color ="red", label ='Training')
-plt.plot(x_axis,np.asarray(test_loss), color ="blue", label ='Test')
-plt.legend()
-plt.show()
+# # plotting
+# plt.title("LOSS using Mean Squared Error")
+# plt.xlabel("Epoch")
+# plt.ylabel("Loss")
+# plt.plot(x_axis,np.asarray(training_loss), color ="red", label ='Training')
+# plt.plot(x_axis,np.asarray(test_loss), color ="blue", label ='Test')
+# plt.legend()
+# plt.show()
 
 
 print("EVALUATION TRAIN")
@@ -123,13 +123,17 @@ evaluation(testY,NN.predict(testX))
 
 
 
+# print("TRAINING")
+# print("Data points:",len(trainX))
+# print ("loss1:" + str(np.mean(np.square(NN.a_out- NN.p_outputs))))
+# print("Confusion Matrix:",confusion_matrix(NN.p_outputs,NN.a_out))
+# print("Confusion Accuracy:",conf_accuracy(NN.p_outputs,NN.a_out))
 
-
-print("TRAINING")
-print("Data points:",len(trainX))
-print ("loss1:" + str(np.mean(np.square(NN.a_out- NN.p_outputs))))
-print("Confusion Matrix:",confusion_matrix(NN.p_outputs,NN.a_out))
-print("Confusion Accuracy:",conf_accuracy(NN.p_outputs,NN.a_out))
+# print("TEST")
+# print("Data points:",len(testX))
+# print ("loss1:" + str(np.mean(np.square(NN.a_out - NN.predict(testX)))))
+# print("Confusion Matrix:",confusion_matrix(NN.predict(testX),testY))
+# print("Confusion Accuracy:",conf_accuracy(NN.predict(testX),testY))
 
 
 #sample prediction

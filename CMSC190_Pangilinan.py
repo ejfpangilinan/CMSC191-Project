@@ -271,6 +271,9 @@ if __name__ == "__main__":
 
 		NN.train()
 
+	print("EVALUATION TRAIN")
+	evaluation(NN.a_out,normalize(NN.p_outputs))
+
 	NN.save_model()
 
 	NN = NeuralNetwork(testX, testY,1)
@@ -296,8 +299,7 @@ if __name__ == "__main__":
 	plt.show()
 
 
-	print("EVALUATION TRAIN")
-	evaluation(NN.a_out,normalize(NN.p_outputs))
+	
 	print("EVALUATION TEST1")
 	evaluation(testY,NN.predict(testX))
 
